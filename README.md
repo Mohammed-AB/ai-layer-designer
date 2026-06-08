@@ -85,11 +85,12 @@ cp .env.example .env      # fill in your Supabase values
 npm run dev               # http://localhost:5173
 ```
 
-The `generate-layers` Edge Function needs a `LOVABLE_API_KEY` set as a Supabase secret:
+The `generate-layers` Edge Function needs an `AI_GATEWAY_API_KEY` and `AI_GATEWAY_URL` set as Supabase secrets:
 
 ```bash
 supabase functions deploy generate-layers
-supabase secrets set LOVABLE_API_KEY=your_key
+supabase secrets set AI_GATEWAY_API_KEY=your_key
+supabase secrets set AI_GATEWAY_URL=https://your-openai-compatible-image-endpoint/v1/chat/completions
 ```
 
 ### Environment variables
@@ -99,7 +100,8 @@ supabase secrets set LOVABLE_API_KEY=your_key
 | `VITE_SUPABASE_URL` | `.env` (client) | Supabase project URL |
 | `VITE_SUPABASE_PROJECT_ID` | `.env` (client) | Supabase project id |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | `.env` (client) | Supabase anon key (public) |
-| `LOVABLE_API_KEY` | Supabase **Edge Function secret** | Auth for the image-model gateway |
+| `AI_GATEWAY_API_KEY` | Supabase **Edge Function secret** | Auth for an OpenAI-compatible image-generation gateway |
+| `AI_GATEWAY_URL` | Supabase **Edge Function secret** | Chat-completions endpoint of an OpenAI-compatible image-generation gateway |
 
 > Want to use your own model? The function targets an OpenAI-compatible image endpoint — point it at any Gemini/OpenAI-compatible gateway by editing `supabase/functions/generate-layers/index.ts`.
 
