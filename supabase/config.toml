@@ -1,0 +1,4 @@
+project_id = "lsiiaqchlddsbzaflkln"
+
+[functions.generate-layers]
+verify_jwt = false
