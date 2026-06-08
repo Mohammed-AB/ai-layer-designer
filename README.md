@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🎨 AI Layer Designer
+<img src="assets/banner.png" alt="AI Layer Designer" width="100%" />
+
+<br/>
 
 ### Generate an image as four editable AI layers — then export it as a real Photoshop `.psd`.
 
