@@ -1,124 +1,62 @@
-<div align="center">
+# AI Layer Designer
 
-<img src="assets/banner.png" alt="AI Layer Designer" width="100%" />
+A four-stage image-generation prototype with a browser-based Photoshop exporter. Built by **Mohammed Abumtary**.
 
-<br/>
+[Try the export demo](docs/DEMO.md) · [Configure generation](docs/SETUP.md) · [Architecture](docs/ARCHITECTURE.md) · [Portfolio](https://mohammed-ab.github.io/)
 
-### Generate an image as four editable AI layers — then export it as a real Photoshop `.psd`.
+![AI Layer Designer export demo](docs/demo.png)
 
-Most AI image tools hand you a single flat picture. **AI Layer Designer** builds your image the way a designer actually works — **Background → Main Elements → Details → Final Polish** — and lets you download any stage, or the whole thing as a **layered `.psd`** you can keep editing in Photoshop.
+## Try the real export path, without an API key
 
-![React](https://img.shields.io/badge/React_18-20232A?logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?logo=tailwindcss&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-8E75B2?logo=googlegemini&logoColor=white)
-![ag-psd](https://img.shields.io/badge/ag--psd-PSD_export-FC5D0D)
-![License: MIT](https://img.shields.io/badge/License-MIT-22C55E)
+With Node.js 22, after cloning:
 
-</div>
+```bash
+npm ci
+npm run demo
+```
 
----
+Open **http://127.0.0.1:8080/?demo**, select **Load sample layers**, then **Export PSD**. The four deterministic drawing fixtures use the same `LayersPanel` and `createPsdFromLayers` implementation as generated images. They are labeled synthetic; they are not model output.
 
-## ✨ Why it's different
+## Engineering focus
 
-- **🧅 Layered, not flat.** Every generation returns **4 progressive layers**, not one image — so you can preview, toggle, and refine each stage independently.
-- **🖼️ Real `.psd` export.** Layers are written into an actual Photoshop document with [`ag-psd`](https://github.com/Agamnentzar/ag-psd) (Background at the bottom, Final Polish on top) — open it in Photoshop, Affinity, or GIMP and keep working.
-- **📌 Reference-image aware.** Drop in a reference and the model matches its style and composition.
-- **⚡ One prompt → a full build.** Describe the scene once; the pipeline expands it into four targeted, build-on-each-other prompts.
-
-## 🧩 How it works
+- A Supabase Edge Function sends four sequential requests with stage-specific prompts: background, main elements, details and final polish.
+- Each request can include the user's reference image.
+- The UI inspects and downloads each stage.
+- `ag-psd` writes named raster layers into a 1024×1024 Photoshop document, scaling and centering each source image.
+- Model-provider credentials stay in the Edge Function; browser configuration contains only public Supabase values.
 
 ```mermaid
 flowchart LR
-  A[📝 Prompt + optional reference] --> B[Supabase Edge Function<br/>generate-layers]
-  B --> L1[1 · Background]
-  B --> L2[2 · Main Elements]
-  B --> L3[3 · Details]
-  B --> L4[4 · Final Polish]
-  L1 & L2 & L3 & L4 --> C[Layers panel<br/>preview + toggle]
-  C --> D[🖼️ Export layered .psd<br/>ag-psd]
-  style B fill:#6366f1,color:#fff
-  style D fill:#16a34a,color:#fff
+  Prompt[Prompt and optional reference] --> Edge[generate-layers Edge Function]
+  Edge --> Frames[Four sequential image requests]
+  Frames --> Panel[Layer previews]
+  Panel --> Canvas[Canvas image conversion]
+  Canvas --> PSD[Named raster layers in PSD]
 ```
 
-A Supabase Edge Function calls **`google/gemini-2.5-flash-image-preview`** four times, each with a purpose-built prompt that builds on the previous layer:
+## What “layers” means here
 
-| Layer | What it generates |
-|-------|-------------------|
-| **1 · Background** | Environment, base colors, atmosphere — no subjects yet |
-| **2 · Main Elements** | Primary subjects, key objects, focal points |
-| **3 · Details** | Textures, secondary elements, refined lighting |
-| **4 · Final Polish** | Effects, highlights, shadows, color grading |
+The model produces four separate images. Earlier generated images are **not** fed into subsequent requests; each gets the original prompt/reference with a different stage instruction. The output is not guaranteed to align or contain transparent, independently segmented objects. Opaque upper layers can cover lower layers in Photoshop. The browser currently previews stages and downloads them; it does not implement a compositing editor or layer-visibility toggles.
 
-`psdExport.ts` then renders each layer onto a 1024×1024 canvas and writes a single `.psd` — layers reversed so Background sits at the bottom of the stack, with a generated thumbnail.
+This is an experimental image workflow and real raster-export implementation, not a claim of production usage or guaranteed model consistency.
 
-## 🚀 Features
+## Read the implementation
 
-- Four-layer progressive image generation from a single prompt
-- Optional reference image for style & composition guidance
-- Live layer-preview panel with per-layer toggles
-- One-click **Photoshop `.psd`** export with true, editable layers
-- Polished, dark-mode-ready UI — React + shadcn/ui + Tailwind
+| Concern | Source |
+| --- | --- |
+| Prompt and reference upload | [`ImageGenerator.tsx`](src/components/ImageGenerator.tsx) |
+| Model calls and response parsing | [`generate-layers`](supabase/functions/generate-layers/index.ts) |
+| Preview and downloads | [`LayersPanel.tsx`](src/components/LayersPanel.tsx) |
+| PSD construction | [`psdExport.ts`](src/utils/psdExport.ts) |
+| Synthetic export fixtures | [`Demo.tsx`](src/demo/Demo.tsx) |
 
-## 🛠️ Tech stack
-
-| Area | Tools |
-|------|-------|
-| **Frontend** | React 18 · TypeScript · Vite |
-| **UI** | Tailwind CSS · shadcn/ui (Radix) · lucide-react · sonner |
-| **Backend** | Supabase Edge Functions (Deno) |
-| **AI** | Gemini 2.5 Flash (image) via an OpenAI-compatible gateway |
-| **Export** | [`ag-psd`](https://github.com/Agamnentzar/ag-psd) |
-
-## 📦 Getting started
+React 18 · TypeScript · Vite · Supabase Edge Functions · ag-psd.
 
 ```bash
-# 1 — install dependencies
-npm install
-
-# 2 — configure environment
-cp .env.example .env      # fill in your Supabase values
-
-# 3 — run the dev server
-npm run dev               # http://localhost:5173
+npm run typecheck
+npm run build
 ```
 
-The `generate-layers` Edge Function needs an `AI_GATEWAY_API_KEY` and `AI_GATEWAY_URL` set as Supabase secrets:
+[Verification record](docs/VALIDATION.md) · [Optional CI template](docs/verify-workflow.yml.example)
 
-```bash
-supabase functions deploy generate-layers
-supabase secrets set AI_GATEWAY_API_KEY=your_key
-supabase secrets set AI_GATEWAY_URL=https://your-openai-compatible-image-endpoint/v1/chat/completions
-```
-
-### Environment variables
-
-| Variable | Where | Purpose |
-|----------|-------|---------|
-| `VITE_SUPABASE_URL` | `.env` (client) | Supabase project URL |
-| `VITE_SUPABASE_PROJECT_ID` | `.env` (client) | Supabase project id |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `.env` (client) | Supabase anon key (public) |
-| `AI_GATEWAY_API_KEY` | Supabase **Edge Function secret** | Auth for an OpenAI-compatible image-generation gateway |
-| `AI_GATEWAY_URL` | Supabase **Edge Function secret** | Chat-completions endpoint of an OpenAI-compatible image-generation gateway |
-
-> Want to use your own model? The function targets an OpenAI-compatible image endpoint — point it at any Gemini/OpenAI-compatible gateway by editing `supabase/functions/generate-layers/index.ts`.
-
-## 🗂️ Project structure
-
-```
-src/
-  components/ImageGenerator.tsx   # prompt + reference upload + generate
-  components/LayersPanel.tsx      # preview & toggle the 4 layers
-  utils/psdExport.ts              # build a layered .psd with ag-psd
-  pages/Index.tsx                 # app shell + Layer type
-supabase/
-  functions/generate-layers/      # 4-pass progressive image generation
-```
-
-## 📄 License
-
-[MIT](LICENSE) © Mohammed Abumtary
-
-<div align="center"><sub>Built by <a href="https://github.com/Mohammed-AB">Mohammed Abumtary</a> · <a href="https://mohammed-ab.github.io">Portfolio</a></sub></div>
+[MIT](LICENSE) © 2026 Mohammed Abumtary. Third-party packages retain their own licenses.

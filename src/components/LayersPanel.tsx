@@ -9,9 +9,10 @@ import { createPsdFromLayers } from "@/utils/psdExport";
 interface LayersPanelProps {
   layers: Layer[];
   isGenerating: boolean;
+  compact?: boolean;
 }
 
-export const LayersPanel = ({ layers, isGenerating }: LayersPanelProps) => {
+export const LayersPanel = ({ layers, isGenerating, compact = false }: LayersPanelProps) => {
   const downloadLayer = async (layer: Layer) => {
     try {
       const response = await fetch(layer.imageUrl);
@@ -132,7 +133,7 @@ export const LayersPanel = ({ layers, isGenerating }: LayersPanelProps) => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className={compact ? "grid sm:grid-cols-2 gap-6" : "space-y-6"}>
         {layers.map((layer, index) => (
           <div
             key={index}

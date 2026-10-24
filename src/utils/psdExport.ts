@@ -1,12 +1,5 @@
-import { writePsd } from 'ag-psd';
+import { writePsd, type Layer as PsdLayer } from 'ag-psd';
 import { Layer } from '@/pages/Index';
-
-interface PsdLayer {
-  name: string;
-  canvas?: HTMLCanvasElement;
-  opacity?: number;
-  blendMode?: string;
-}
 
 export const createPsdFromLayers = async (layers: Layer[], width: number = 1024, height: number = 1024): Promise<Blob> => {
   // Load all images first
